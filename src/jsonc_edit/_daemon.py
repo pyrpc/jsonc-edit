@@ -5,7 +5,7 @@ import threading
 from pathlib import Path
 
 from ._runtime import ensure_runtime
-from ._errors import DaemonError
+from ._errors import DaemonError, DaemonStartupError, DaemonCrashError, DaemonTimeoutError, RuntimeBootstrapError
 
 class DaemonManager:
     def __init__(self):
@@ -20,8 +20,10 @@ class DaemonManager:
 
             try:
                 parser_path = ensure_runtime()
+            except RuntimeBootstrapError:
+                raise
             except Exception as e:
-                raise DaemonError(f"Failed to bootstrap runtime: {e}") from e
+                raise DaemonStartupError(f"Failed to bootstrap runtime: {e}") from e
 
             daemon_js = Path(__file__).parent / "_daemon.js"
             
@@ -35,7 +37,7 @@ class DaemonManager:
                     bufsize=1 # Line buffered
                 )
             except Exception as e:
-                raise DaemonError(f"Failed to start Node process: {e}") from e
+                raise DaemonStartupError(f"Failed to start Node process: {e}") from e
                 
             # Check if the process died immediately
             try:
@@ -43,7 +45,7 @@ class DaemonManager:
                 # If wait succeeds without TimeoutExpired, process died
                 stderr = self.process.stderr.read()
                 self.process = None
-                raise DaemonError(f"Node process exited immediately: {stderr.strip()}")
+                raise DaemonStartupError(f"Node process exited immediately: {stderr.strip()}")
             except subprocess.TimeoutExpired:
                 # Process is running normally
                 pass
@@ -73,22 +75,24 @@ class DaemonManager:
                 request_str = json.dumps(request)
                 self.process.stdin.write(request_str + "\n")
                 self.process.stdin.flush()
+            except BrokenPipeError as e:
+                raise DaemonCrashError(f"Daemon process died (Broken Pipe): {e}") from e
             except Exception as e:
-                raise DaemonError(f"Failed to write to daemon: {e}") from e
+                raise DaemonCrashError(f"Failed to write to daemon: {e}") from e
 
             try:
                 line = self.process.stdout.readline()
             except Exception as e:
-                raise DaemonError(f"Failed to read from daemon: {e}") from e
+                raise DaemonCrashError(f"Failed to read from daemon: {e}") from e
 
             if not line:
                 # EOF
                 stderr = self.process.stderr.read()
-                raise DaemonError(f"Unexpected EOF from daemon. Stderr: {stderr.strip()}")
+                raise DaemonCrashError(f"Unexpected EOF from daemon. Stderr: {stderr.strip()}")
 
             try:
                 response = json.loads(line)
             except json.JSONDecodeError as e:
-                raise DaemonError(f"Malformed JSON response from daemon: {line.strip()}") from e
+                raise DaemonCrashError(f"Malformed JSON response from daemon: {line.strip()}") from e
 
             return response

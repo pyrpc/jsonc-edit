@@ -41,6 +41,22 @@ def test_startup_failure():
         with pytest.raises(DaemonError, match="Node process exited immediately.*Cannot find jsonc-parser"):
             manager.start()
 
+def test_startup_pristine_error():
+    """Verify that RuntimeBootstrapError is not chained or wrapped."""
+    manager = DaemonManager()
+    from unittest.mock import patch
+    from jsonc_edit._errors import RuntimeBootstrapError
+    
+    def raise_bootstrap():
+        raise RuntimeBootstrapError("Pristine missing node message")
+        
+    with patch("jsonc_edit._daemon.ensure_runtime", side_effect=raise_bootstrap):
+        with pytest.raises(RuntimeBootstrapError, match="Pristine missing node message") as excinfo:
+            manager.start()
+        
+        # Verify it wasn't chained
+        assert excinfo.value.__cause__ is None
+
 def test_malformed_json_request(daemon):
     # Send a string that isn't JSON directly to stdin
     daemon.process.stdin.write("INVALID JSON\n")

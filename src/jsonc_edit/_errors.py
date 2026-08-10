@@ -13,3 +13,15 @@ class JsoncParseError(JsoncEditError):
 class RuntimeBootstrapError(DaemonError):
     """Raised when Node/NPM are missing or fail to install the underlying dependency."""
     pass
+
+class DaemonStartupError(DaemonError):
+    """Raised when the persistent Node daemon fails to start correctly."""
+    pass
+
+class DaemonCrashError(DaemonError):
+    """Raised when the persistent Node daemon crashes or exits unexpectedly."""
+    pass
+
+class DaemonTimeoutError(DaemonError):
+    """Raised when the persistent Node daemon fails to respond within the expected timeframe."""
+    pass

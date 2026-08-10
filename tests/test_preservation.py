@@ -158,12 +158,12 @@ def test_existing_pyrpc_types():
     }
   }
 }'''
-    # Microsoft semantics overwrite it if it's an array reference
+    # We now have native idempotency check, so the formatting is entirely preserved.
     verify_source(
         original, 
         ["compilerOptions", "paths", "@pyrpc/types"], 
         ["./__pyrpc.d.ts"],
-        expected_fragments=['"@pyrpc/types": [\n        "./__pyrpc.d.ts"\n      ]']
+        expected_fragments=['"@pyrpc/types": ["./__pyrpc.d.ts"]']
     )
 
 def test_conflicting_alias():
@@ -242,4 +242,54 @@ def test_realistic_tsconfig():
             '"@pyrpc/types": [\n        "./__pyrpc.d.ts"\n      ]',
             '"include": ["src"],'
         ]
+    )
+
+def test_crlf_lf_preservation():
+    original = '{\r\n  "compilerOptions": {}\r\n}'
+    verify_source(
+        original,
+        ["compilerOptions", "paths", "a"],
+        ["b"],
+        expected_fragments=['{\r\n  "compilerOptions": {\r\n    "paths": {\r\n      "a": [\r\n        "b"\r\n      ]\r\n    }\r\n  }\r\n}']
+    )
+    
+def test_inline_comments():
+    original = '''{
+  "strict": true, // important
+}'''
+    # jsonc-parser natively pushes the trailing comment down to the new property
+    verify_source(
+        original,
+        ["foo"],
+        "bar",
+        expected_fragments=['"strict": true,\n  "foo": "bar", // important']
+    )
+
+def test_comments_around_properties():
+    original = '''{
+  // before
+  "a": 1,
+  // between
+  "b": 2,
+}'''
+    verify_source(
+        original,
+        ["c"],
+        3,
+        expected_fragments=[
+            '// before\n  "a": 1,',
+            '// between\n  "b": 2,',
+            '"c": 3'
+        ]
+    )
+
+def test_empty_array():
+    original = '''{
+  "include": []
+}'''
+    verify_source(
+        original,
+        ["include", 0],
+        "src",
+        expected_fragments=['"include": [\n    "src"\n  ]']
     )

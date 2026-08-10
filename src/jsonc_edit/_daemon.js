@@ -55,6 +55,15 @@ rl.on('line', (line) => {
             const { text, edits } = req.args;
             const newText = jsoncParser.applyEdits(text, edits);
             send({ success: true, data: newText });
+        } else if (req.op === "get_value") {
+            const { text, path } = req.args;
+            const tree = jsoncParser.parseTree(text);
+            const node = jsoncParser.findNodeAtLocation(tree, path);
+            if (node === undefined) {
+                send({ success: true, data: { found: false } });
+            } else {
+                send({ success: true, data: { found: true, value: jsoncParser.getNodeValue(node) } });
+            }
         } else {
             send({ success: false, error: `Unknown operation: ${req.op}` });
         }
