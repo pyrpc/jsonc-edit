@@ -42,5 +42,6 @@ test_env/
 docs/node_modules/
 docs/.next/
 docs/out/
+docs/.source/
 docs/.env*.local
 docs/.turbo/
