@@ -13,9 +13,9 @@ from ._errors import RuntimeBootstrapError
 def check_prerequisites():
     """Verify that node and npm are installed."""
     if not shutil.which("node"):
-        raise RuntimeBootstrapError("jsonc_edit requires Node.js to run the underlying jsonc-parser JavaScript library, but the 'node' executable was not found.")
+        raise RuntimeBootstrapError("jsonc_edit requires Node.js to run the underlying jsonc-parser JavaScript library, but the 'node' executable was not found.\n\nInstall Node.js and try again.")
     if not shutil.which("npm"):
-        raise RuntimeBootstrapError("jsonc_edit requires npm to install the underlying jsonc-parser JavaScript library, but the 'npm' executable was not found.")
+        raise RuntimeBootstrapError("jsonc_edit requires npm to install the underlying jsonc-parser JavaScript library, but the 'npm' executable was not found.\n\nInstall npm and try again.")
 
 def get_cache_dir() -> Path:
     """Get the path to the version-specific cache directory."""

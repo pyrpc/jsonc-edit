@@ -1,5 +1,7 @@
 import pytest
-from jsonc_edit import modify, apply_edits, Edit, JsoncParseError
+import os
+from pathlib import Path
+from jsonc_edit import modify, apply_edits, edit, edit_file, Edit, JsoncParseError
 import jsonc_edit._api as api
 
 pytestmark = pytest.mark.integration
@@ -23,6 +25,34 @@ def test_basic_modification():
     assert '"paths":' in new_text
     assert '"@pyrpc/types":' in new_text
     assert '"./__pyrpc.d.ts"' in new_text
+
+def test_edit_convenience():
+    source = '{\n  "hello": "world"\n}'
+    
+    result = edit(source, ["hello"], "universe")
+    assert '"universe"' in result
+    
+    # Test no changes (e.g. value is the same)
+    result_same = edit(source, ["hello"], "world")
+    assert result_same == source
+
+def test_edit_file_convenience(tmp_path):
+    source_file = tmp_path / "config.json"
+    source_file.write_text('{\n  "hello": "world"\n}', encoding="utf-8")
+    
+    # Get original mtime to verify it doesn't change when there's no edit
+    mtime_before = source_file.stat().st_mtime
+    
+    # Test actual edit
+    edit_file(source_file, ["hello"], "universe")
+    assert '"universe"' in source_file.read_text(encoding="utf-8")
+    
+    mtime_after = source_file.stat().st_mtime
+    
+    # Test no change edit
+    edit_file(source_file, ["hello"], "universe")
+    # File shouldn't be touched
+    assert source_file.stat().st_mtime == mtime_after
 
 def test_existing_object():
     text = '{\n  "compilerOptions": {\n    "paths": {}\n  }\n}'
@@ -73,3 +103,31 @@ def test_jsonc_parse_error():
     with pytest.raises(JsoncParseError):
         # Pass None as text to force a JS TypeError in the parser
         apply_edits(None, [Edit(offset=0, length=1, content="")])
+
+from jsonc_edit import get_value, MISSING
+
+def test_get_value():
+    text = '{\n  "a": 1,\n  "b": {"c": [1, 2, 3]},\n  "d": null\n}'
+    
+    assert get_value(text, ["a"]) == 1
+    assert get_value(text, ["b", "c"]) == [1, 2, 3]
+    assert get_value(text, ["b", "c", 1]) == 2
+    assert get_value(text, ["d"]) is None
+    
+    # Missing nodes should return MISSING sentinel, not None (which is a valid JSON value)
+    assert get_value(text, ["x"]) is MISSING
+    assert get_value(text, ["b", "x"]) is MISSING
+    assert get_value(text, ["b", "c", 5]) is MISSING
+
+from jsonc_edit import edit_many
+
+def test_edit_many():
+    source = '{\n  "a": 1\n}'
+    
+    result = edit_many(source, [
+        (["b"], 2),
+        (["c"], 3)
+    ])
+    
+    assert '"b": 2' in result
+    assert '"c": 3' in result

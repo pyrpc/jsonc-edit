@@ -8,10 +8,21 @@ version = "0.1.0"
 description = "Python bindings for Microsoft's jsonc-parser for surgical JSONC source editing."
 readme = "README.md"
 requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [
+  { name="pyrpc", email="pyrpc@pyrpc.example.com" }
+]
+
+[project.urls]
+Repository = "https://github.com/pyrpc/jsonc-edit"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+markers = [
+    "integration: marks tests that require the Node daemon and Microsoft jsonc-parser"
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/jsonc_edit"]
+include = ["src/jsonc_edit/_daemon.js"]

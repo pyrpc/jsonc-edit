@@ -97,3 +97,26 @@ from jsonc_edit import edit_session, modify
 with edit_session():
     edits = modify("{}", ["a"], 1)
 ```
+
+## API Reference
+
+### `edit(text: str, path: List[str | int], value: Any, options=None) -> str`
+Generates edits for modifying the value at `path` to `value` and immediately applies them to `text`. Path segments are interpreted literally (no escaping needed).
+
+### `edit_file(filepath: str | Path, path: List[str | int], value: Any, options=None) -> None`
+Safely reads `filepath`, applies the edit via `edit()`, and atomically writes back the modification *only* if the content actually changed.
+
+### `edit_many(text: str, operations: List[Tuple[path, value]], options=None) -> str`
+Applies multiple operations sequentially without causing internal offset corruption.
+
+### `get_value(text: str, path: List[str | int]) -> Any | MISSING`
+Semantically parses and returns the value at the target path. Returns the `MISSING` sentinel if the path does not exist, explicitly distinguishing from an actual `"property": null` assignment.
+
+### `modify(text: str, path: List[str | int], value: Any, options=None) -> List[Edit]`
+Analyzes the AST and generates a precise list of raw offset character edits (without applying them).
+
+### `apply_edits(text: str, edits: List[Edit]) -> str`
+Applies raw offset character edits to the source string.
+
+### `edit_session()`
+A context manager that guarantees the background Node.js daemon shuts down perfectly when exiting the `with` block. Mostly useful for strict deterministic lifecycle scripts.
