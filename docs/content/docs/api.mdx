@@ -1,0 +1,58 @@
+---
+title: API Reference
+description: Complete API documentation for jsonc-edit
+---
+
+The `jsonc_edit` module exposes a clean Python API for modifying JSONC files.
+
+## Functions
+
+### `modify(text, path, value, options=None)`
+
+Generates a list of textual edits to apply a semantic change to the JSONC document.
+
+- `text` (str): The original JSONC source string.
+- `path` (list[str | int]): The JSON path to the value you want to modify (e.g., `["compilerOptions", "paths"]`).
+- `value` (Any): The new value to set at the specified path. Can be any JSON-serializable Python object.
+- `options` (dict, optional): Formatting options to use if the library needs to scaffold new objects or reformat. See [Options Reference](/docs/options-reference).
+
+**Returns**: A list of `Edit` objects representing the character offset modifications.
+
+### `apply_edits(text, edits)`
+
+Applies a list of `Edit` objects to the original text.
+
+- `text` (str): The original JSONC source string.
+- `edits` (list[Edit]): The edits returned by `modify()`.
+
+**Returns**: The modified JSONC source string.
+
+### `edit_session()`
+
+A context manager to ensure the background Node daemon is cleanly shut down when you are finished. By default, `jsonc-edit` leaves the daemon running until the Python interpreter exits (via `atexit`). Use this if you want deterministic lifecycle control.
+
+```python
+from jsonc_edit import edit_session, modify
+
+with edit_session():
+    edits = modify("{}", ["a"], 1)
+```
+
+## Data Models
+
+### `Edit`
+
+A dataclass representing a precise string replacement.
+
+- `offset` (int): The 0-indexed character offset in the source string.
+- `length` (int): The number of characters to replace.
+- `content` (str): The new string content to insert.
+
+## Exceptions
+
+The library provides a clean exception hierarchy (`from jsonc_edit import *`):
+
+- **`JsoncEditError`**: The base exception class.
+- **`JsoncParseError`**: Raised when you provide completely invalid JSONC syntax or request an operation the parser rejects.
+- **`DaemonError`**: Raised when the internal Node process crashes or fails to respond.
+- **`RuntimeBootstrapError`**: A subclass of `DaemonError` raised specifically when `node` or `npm` are missing from the system, or the dependency fails to install.

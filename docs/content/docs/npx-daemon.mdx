@@ -1,0 +1,33 @@
+---
+title: Daemon Architecture
+description: How the invisible Node daemon works
+---
+
+To achieve perfect semantic precision, `jsonc-edit` wraps Microsoft's official `jsonc-parser` npm package. Since Python cannot run this JavaScript library natively, we orchestrate it via a hidden Node.js daemon.
+
+## Dependency Management
+
+You do **not** need to run `npm install` in your project.
+
+On its very first run, `jsonc-edit` performs a deterministic installation:
+1. It verifies `node` and `npm` are installed on your system.
+2. It locks a specific, tested version of `jsonc-parser` (e.g., `3.3.1`).
+3. It installs this version to a globally isolated user cache at `~/.jsonc-edit/versions/3.3.1/`.
+
+Subsequent executions of `jsonc-edit` (even from different Python environments) will instantly reuse this cache, bypassing npm completely.
+
+## The Node Daemon
+
+Loading Node.js and compiling JavaScript takes ~150ms. If we launched a new Node process for every JSONC edit, performance would be unacceptably slow.
+
+Instead, `jsonc-edit` launches a **persistent daemon**:
+
+1. A single Node process boots up in the background and loads `jsonc-parser`.
+2. Python communicates with this process via `stdin`/`stdout` using a blazing-fast, newline-delimited JSON protocol.
+3. The daemon acts purely as a stateless RPC server, applying AST edits in memory and returning the exact string offsets.
+
+### Concurrency and Lifecycle
+
+- **Thread-Safe**: The Python boundary is protected by a threading lock, meaning you can safely call `modify()` from multiple threads concurrently. They will all multiplex through the single daemon.
+- **Auto-Cleanup**: By default, the daemon is automatically killed when your Python interpreter exits via an `atexit` hook.
+- **Zero Leakage**: If you need strict control, you can use the `edit_session()` context manager to deterministically spin up and tear down the daemon on command.

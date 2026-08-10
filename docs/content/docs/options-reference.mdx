@@ -1,0 +1,44 @@
+---
+title: Formatting Options
+description: Configuration options for jsonc-edit
+---
+
+When `modify()` needs to insert new objects or arrays into your JSONC document (e.g. scaffolding missing fields), it uses formatting options to determine how the new text should be styled.
+
+By default, `jsonc-edit` uses:
+
+```json
+{
+  "insertSpaces": true,
+  "tabSize": 2
+}
+```
+
+## Customizing Options
+
+You can pass a dictionary to the `options` parameter of `modify()` containing a `formattingOptions` key:
+
+```python
+edits = modify(
+    source, 
+    ["newKey"], 
+    "value",
+    options={
+        "formattingOptions": {
+            "insertSpaces": False,
+            "tabSize": 4,
+            "eol": "\n"
+        }
+    }
+)
+```
+
+### Available Properties
+
+- **`insertSpaces`** (bool): Whether to use spaces (True) or tabs (False) for indentation.
+- **`tabSize`** (int): The number of spaces per indentation level (only applies if `insertSpaces` is True).
+- **`eol`** (str): The end-of-line character sequence to use (e.g., `\n` or `\r\n`).
+
+### Native Preservation
+
+Remember that these options **only apply to newly generated text**. `jsonc-edit` respects the existing formatting of the document for all untouched elements. The parser is intelligent enough to infer indentation for surgically inserted properties without globally reformatting your file.

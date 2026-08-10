@@ -1,0 +1,37 @@
+---
+title: Introduction
+description: What is jsonc-edit and why it exists
+---
+
+# jsonc-edit
+
+A Python interface to Microsoft's `jsonc-parser`, designed for source-preserving JSONC edits.
+
+## The Problem
+
+When modifying configuration files (like `tsconfig.json` or `.vscode/settings.json`), the standard programmatic approach is highly destructive:
+
+```text
+parse source string → modify Python dict in memory → dump back to string
+```
+
+This naive approach immediately strips all `// line comments`, `/* block comments */`, trailing commas, and completely mangles the developer's original indentation and formatting choices.
+
+## The Solution
+
+`jsonc-edit` uses a fundamentally different approach:
+
+```text
+semantic JSONC edit → generate precise text offset edits → apply edits to raw string
+```
+
+By analyzing the AST and applying surgical character replacements, `jsonc-edit` perfectly preserves all human-authored elements in the file, including neighboring comments and specific array formatting.
+
+## Scope
+
+`jsonc-edit` is intended to be a reusable, generalized JSONC source-editing library. It is strictly scoped to this purpose.
+
+It is **not**:
+* A `tsconfig.json` manager.
+* A framework-specific plugin or library.
+* A full JSONC configuration framework that validates schemas or paths.

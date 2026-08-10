@@ -1,0 +1,25 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+
+/* Remove the left gutter column so the sidebar sits flush at the viewport edge.
+   The 4-column grid places sidebar first, then main content, TOC, and right gutter. */
+#nd-docs-layout {
+  grid-template:
+    "sidebar header toc toc"
+    "sidebar toc-popover toc toc"
+    "sidebar main toc toc" 1fr
+    / var(--fd-sidebar-col) minmax(0, calc(
+          var(--fd-layout-width, 97rem) - var(--fd-sidebar-width) -
+          var(--fd-toc-width)
+        )) var(--fd-toc-width) minmax(min-content, 1fr) !important;
+}
+
+/* When collapsed, keep the hover-trigger zone at the left viewport edge */
+#nd-docs-layout[data-sidebar-collapsed="true"] [data-sidebar-placeholder] > div:first-child {
+  position: fixed !important;
+  inset: 0 auto auto 0 !important;
+  width: 16px !important;
+  height: 100dvh !important;
+  z-index: 50 !important;
+}

@@ -1,0 +1,53 @@
+---
+title: Getting Started
+description: How to install and use jsonc-edit
+---
+
+## Installation
+
+Install the package via pip:
+
+```bash
+pip install jsonc-edit
+```
+
+### Runtime Prerequisites
+
+<Callout type="warn">
+**Node.js & npm Required**
+
+Because `jsonc-edit` leverages the official Microsoft parser to ensure exact semantic correctness, it requires `node` and `npm` to be installed and available on your system path.
+</Callout>
+
+During its first execution, `jsonc-edit` will automatically install the necessary pinned parser package into an isolated user-level cache (`~/.jsonc-edit/versions/`). It does not pollute your project's `node_modules`.
+
+## Basic Example
+
+Here is how you can surgically modify a `tsconfig.json` file to add a new path alias:
+
+```python
+from jsonc_edit import modify, apply_edits
+
+source = """{
+  // My custom aliases
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  }
+}"""
+
+# Generate the specific string manipulations needed
+edits = modify(
+    source,
+    ["compilerOptions", "paths", "@example"],
+    ["./types.d.ts"],
+)
+
+# Apply them to the raw source code
+result = apply_edits(source, edits)
+
+print(result)
+```
+
+The output will safely insert the new alias while completely respecting the existing `// My custom aliases` comment and the surrounding whitespace preferences.
