@@ -1,0 +1,17 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "jsonc_edit"
+version = "0.1.0"
+description = "Python bindings for Microsoft's jsonc-parser for surgical JSONC source editing."
+readme = "README.md"
+requires-python = ">=3.8"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/jsonc_edit"]
