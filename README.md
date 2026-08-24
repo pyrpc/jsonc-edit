@@ -42,6 +42,8 @@ Because `jsonc-edit` leverages the official Microsoft parser to ensure exact sem
 **You must have `node` and `npm` installed and available on your system path.** 
 During its first execution, `jsonc-edit` will automatically install the necessary pinned parser package into an isolated user-level cache (`~/.jsonc-edit/versions/`). It does not pollute your project's `node_modules`.
 
+**Windows users:** `jsonc-edit` fully supports Windows. The runtime installer automatically routes `npm` through `cmd.exe` to work around Windows-specific batch file execution constraints.
+
 ## Basic Example
 
 ```python

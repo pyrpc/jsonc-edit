@@ -14,6 +14,8 @@ On its very first run, `jsonc-edit` performs a deterministic installation:
 2. It locks a specific, tested version of `jsonc-parser` (e.g., `3.3.1`).
 3. It installs this version to a globally isolated user cache at `~/.jsonc-edit/versions/3.3.1/`.
 
+This process works seamlessly across **Linux, macOS, and Windows**. On Windows, `jsonc-edit` automatically routes `npm` through `cmd.exe` to work around batch file execution constraints, ensuring reliable first-run installation.
+
 Subsequent executions of `jsonc-edit` (even from different Python environments) will instantly reuse this cache, bypassing npm completely.
 
 ## The Node Daemon
