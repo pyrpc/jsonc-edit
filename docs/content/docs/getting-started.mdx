@@ -21,6 +21,12 @@ Because `jsonc-edit` leverages the official Microsoft parser to ensure exact sem
 
 During its first execution, `jsonc-edit` will automatically install the necessary pinned parser package into an isolated user-level cache (`~/.jsonc-edit/versions/`). It does not pollute your project's `node_modules`.
 
+<Callout type="info">
+**Windows Support**
+
+`jsonc-edit` fully supports Windows. The runtime installer automatically routes `npm` through `cmd.exe` to work around Windows-specific batch file execution constraints.
+</Callout>
+
 ## Basic Example
 
 Here is how you can surgically modify a `tsconfig.json` file to add a new path alias:
