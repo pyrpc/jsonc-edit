@@ -4,17 +4,31 @@ import subprocess
 import json
 from pathlib import Path
 
+_IS_WINDOWS = os.name == "nt"
+
 JSONC_PARSER_VERSION = "3.3.1"
 PACKAGE_NAME = "jsonc-parser"
 CACHE_DIR_NAME = ".jsonc-edit"
 
 from ._errors import RuntimeBootstrapError
 
+def _find_npm() -> str | None:
+    """Return the resolved npm command for subprocess use.
+
+    On POSIX, bare ``"npm"`` works because the shell resolves shebang
+    scripts. On Windows ``npm`` is ``npm.cmd`` and ``CreateProcess`` cannot
+    execute ``.cmd`` files directly, so we locate the full path to
+    ``npm.cmd`` via ``shutil.which``.
+    """
+    npm = shutil.which("npm.cmd" if _IS_WINDOWS else "npm")
+    return npm
+
+
 def check_prerequisites():
     """Verify that node and npm are installed."""
     if not shutil.which("node"):
         raise RuntimeBootstrapError("jsonc_edit requires Node.js to run the underlying jsonc-parser JavaScript library, but the 'node' executable was not found.\n\nInstall Node.js and try again.")
-    if not shutil.which("npm"):
+    if _find_npm() is None:
         raise RuntimeBootstrapError("jsonc_edit requires npm to install the underlying jsonc-parser JavaScript library, but the 'npm' executable was not found.\n\nInstall npm and try again.")
 
 def get_cache_dir() -> Path:
@@ -47,14 +61,29 @@ def install_dependency():
     with open(package_json_path, "w", encoding="utf-8") as f:
         json.dump(package_json, f, indent=2)
     
-    # Run npm install deterministically
+    # Run npm install deterministically.
+    # On Windows, bare ``npm`` resolves to ``npm.cmd`` which CreateProcess
+    # cannot execute directly, so we route through cmd.exe.
+    npm_cmd = _find_npm()
+    if npm_cmd is None:
+        raise RuntimeBootstrapError(
+            f"Cannot locate npm to install {PACKAGE_NAME}@{JSONC_PARSER_VERSION}."
+        )
+
+    if _IS_WINDOWS:
+        comspec = os.environ.get("COMSPEC", r"C:\Windows\System32\cmd.exe")
+        cmd = [comspec, "/d", "/s", "/c", npm_cmd, "install", "--no-audit", "--no-fund"]
+    else:
+        cmd = [npm_cmd, "install", "--no-audit", "--no-fund"]
+
     try:
         subprocess.run(
-            ["npm", "install", "--no-audit", "--no-fund"],
+            cmd,
             cwd=str(cache_dir),
             check=True,
             capture_output=True,
-            text=True
+            text=True,
+            timeout=180,
         )
     except subprocess.CalledProcessError as e:
         raise RuntimeBootstrapError(f"Failed to install {PACKAGE_NAME}@{JSONC_PARSER_VERSION}: {e.stderr}")
