@@ -3,6 +3,7 @@ import shutil
 import subprocess
 import json
 from pathlib import Path
+from typing import Optional
 
 _IS_WINDOWS = os.name == "nt"
 
@@ -12,7 +13,7 @@ CACHE_DIR_NAME = ".jsonc-edit"
 
 from ._errors import RuntimeBootstrapError
 
-def _find_npm() -> str | None:
+def _find_npm() -> Optional[str]:
     """Return the resolved npm command for subprocess use.
 
     On POSIX, bare ``"npm"`` works because the shell resolves shebang
